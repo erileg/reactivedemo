@@ -1,5 +1,6 @@
 package com.example.reactivedemo;
 
+import javafx.css.StyleableProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,10 +16,17 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
+
+import javax.xml.ws.Provider;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.stream.Stream;
 
 @SpringBootApplication
 public class ReactiveDemoApplication {
@@ -27,14 +35,28 @@ public class ReactiveDemoApplication {
 	}
 }
 
+@Component
+class IntervalGreetingsProducer {
+	Flux<GreetingsResponse> produceGreetings(GreetingsRequest request) {
+		return Flux.fromStream(Stream.generate(() -> new GreetingsResponse("Hello " + request.getName() + " @ " + Instant.now())
+		)).delayElements(Duration.ofSeconds(1));
+	}
+}
+
 @RestController
 @RequiredArgsConstructor
-class ReservationRestController{
+class ReservationRestController {
 	private final ReservationRepository reservationRepository;
+	private final IntervalGreetingsProducer intervalGreetingsProducer;
 
 	@GetMapping("/reservations")
-	Publisher<Reservation> reservationPublisher (){
+	Publisher<Reservation> reservationPublisher() {
 		return reservationRepository.findAll();
+	}
+
+	@GetMapping(value ="/sse/{name}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public Publisher<GreetingsResponse> greetingsPublisher (@PathVariable String name){
+		return intervalGreetingsProducer.produceGreetings(new GreetingsRequest(name));
 	}
 }
 
