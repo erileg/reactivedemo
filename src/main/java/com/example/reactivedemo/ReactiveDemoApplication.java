@@ -21,12 +21,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.server.*;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.xml.ws.Provider;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.stream.Stream;
+
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @SpringBootApplication
 public class ReactiveDemoApplication {
@@ -41,6 +45,14 @@ class IntervalGreetingsProducer {
 		return Flux.fromStream(Stream.generate(() -> new GreetingsResponse("Hello " + request.getName() + " @ " + Instant.now())
 		)).delayElements(Duration.ofSeconds(1));
 	}
+
+	@Bean
+	RouterFunction<ServerResponse> route(ReservationRepository reservationRepository) {
+		return RouterFunctions.route()
+				.GET("/reservations", request -> ok().body(reservationRepository.findAll(), Reservation.class))
+				.build();
+	}
+
 }
 
 @RestController
@@ -49,13 +61,8 @@ class ReservationRestController {
 	private final ReservationRepository reservationRepository;
 	private final IntervalGreetingsProducer intervalGreetingsProducer;
 
-	@GetMapping("/reservations")
-	Publisher<Reservation> reservationPublisher() {
-		return reservationRepository.findAll();
-	}
-
-	@GetMapping(value ="/sse/{name}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public Publisher<GreetingsResponse> greetingsPublisher (@PathVariable String name){
+	@GetMapping(value = "/sse/{name}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public Publisher<GreetingsResponse> greetingsPublisher(@PathVariable String name) {
 		return intervalGreetingsProducer.produceGreetings(new GreetingsRequest(name));
 	}
 }
