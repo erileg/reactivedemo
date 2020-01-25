@@ -46,7 +46,7 @@ class SampleDataInitializer {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void initialize() {
-		Flux<Reservation> reservations = Flux.just("Heinz", "Foo", "Bar", "Calvin", "Hobbes", "Luke", "Han", "Leia")
+		Publisher<Reservation> reservations = Flux.just("Luke", "Han", "Leia", "Ben Obi-Wan Kenobi", "Darth Vader", "C-3PO", "R2-D2", "Chewbacca", "Boba Fett")
 				.flatMap(name -> reservationRepository.save(new Reservation(null, name)));
 
 		reservationRepository.deleteAll()
@@ -56,16 +56,6 @@ class SampleDataInitializer {
 	}
 }
 
-//@Document
-//@Data
-//@AllArgsConstructor
-//@NoArgsConstructor
-//class Reservation {
-//	@Id
-//	private String id;
-//	private String name;
-//}
-
 interface ReservationRepository extends ReactiveCrudRepository<Reservation, String> {
-
+	// blank
 }
