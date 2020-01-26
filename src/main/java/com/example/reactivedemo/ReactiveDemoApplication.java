@@ -37,6 +37,13 @@ public class ReactiveDemoApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ReactiveDemoApplication.class, args);
 	}
+
+	@Bean
+	RouterFunction<ServerResponse> route(ReservationRepository reservationRepository) {
+		return RouterFunctions.route()
+				.GET("/reservations", request -> ok().body(reservationRepository.findAll(), Reservation.class))
+				.build();
+	}
 }
 
 @Component
@@ -45,14 +52,6 @@ class IntervalGreetingsProducer {
 		return Flux.fromStream(Stream.generate(() -> new GreetingsResponse("Hello " + request.getName() + " @ " + Instant.now())
 		)).delayElements(Duration.ofSeconds(1));
 	}
-
-	@Bean
-	RouterFunction<ServerResponse> route(ReservationRepository reservationRepository) {
-		return RouterFunctions.route()
-				.GET("/reservations", request -> ok().body(reservationRepository.findAll(), Reservation.class))
-				.build();
-	}
-
 }
 
 @RestController
