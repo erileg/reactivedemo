@@ -49,8 +49,11 @@ public class ReactiveDemoApplication {
 @Component
 class IntervalGreetingsProducer {
 	Flux<GreetingsResponse> produceGreetings(GreetingsRequest request) {
-		return Flux.fromStream(Stream.generate(() -> new GreetingsResponse("Hello " + request.getName() + " @ " + Instant.now())
-		)).delayElements(Duration.ofSeconds(1));
+//		return Flux.fromStream(Stream.generate(() -> new GreetingsResponse("Hello " + request.getName() + " @ " + Instant.now())
+//		)).delayElements(Duration.ofSeconds(1));
+
+		return Flux.interval(Duration.ofSeconds(1))
+				.map(sequence -> new GreetingsResponse(sequence + ": Hello " + request.getName() + " @ " + Instant.now()));
 	}
 }
 
